@@ -25,6 +25,7 @@ import asyncio
 from typing import List
 
 import numpy as np
+from crypto_data_downloader.binance import ALL_COLUMNS
 from crypto_data_downloader.utils import format_date, plot_crypto_data, timestamp
 from PIL import Image
 
@@ -41,6 +42,10 @@ async def main():
             )
 
     x = CryptoMonitor()
+    x.quote = "USDT"  # Quote asset
+    x.interval = "5m"  # Kline time interval
+    x.columns = ["open_time", "close"]  # Data columns to include
+    print(f"All data columns: {ALL_COLUMNS}")
     x.kline_lim = 10  # Only show 10 time steps for clearer visualization
     x.market = ["SPOT", "MARGIN"][1]
     x.max_num = 20  # Only show 20 symbols for visualization
@@ -67,6 +72,7 @@ asyncio.run(main())
 - Output
 
 ```bash
+All data columns: ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_volume', 'n_trades', 'taker_buy_base_volume', 'taker_buy_quote_volume', 'unused']
 weight lim: 5000/6000, USDT symbols: 599, spot: 559, margin: 403
 BTC. my time: 2025-08-07 04:10:22, event time: 2025-08-07 04:10:22, price: 114639.92
 BTC. my time: 2025-08-07 04:10:24, event time: 2025-08-07 04:10:24, price: 114639.91
