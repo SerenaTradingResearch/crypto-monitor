@@ -2,7 +2,7 @@ import asyncio
 from typing import Dict, List
 
 import numpy as np
-from crypto_data_downloader.binance import CryptoDataDownloader
+from crypto_data_downloader.binance import CryptoDataDownloader, FuturesDataDownloader
 
 from .utils import chunk, gather_n_cancel, retry
 
@@ -34,7 +34,8 @@ class CryptoMonitor(CryptoDataDownloader):
 
     async def get_info_filtered(s):
         def ok(x):
-            return s.market in x["permissions"] and x["status"] == "TRADING"
+            allowed = s.market in x["permissions"] if s.is_spot else True
+            return allowed and x["status"] == "TRADING"
 
         await s.get_info()
         s.symbols = [x for x in s.symbols if ok(x)][: s.max_num]
@@ -83,3 +84,7 @@ class CryptoMonitor(CryptoDataDownloader):
 
     async def on_change(s, sym: str, arr: np.ndarray, e_time: int):
         pass
+
+
+class FuturesMonitor(FuturesDataDownloader, CryptoMonitor):
+    ws_base = "wss://fstream.binance.com"
