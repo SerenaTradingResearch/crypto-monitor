@@ -50,9 +50,6 @@ class CryptoMonitor(CryptoDataDownloader):
         s.data: Dict[str, np.ndarray] = {}
         s.update_time: Dict[str, int] = {}
 
-        async def get_one(sym: str):
-            s.data[sym] = await s.get_kline(dict(symbol=sym))
-
         async def watch_some(syms: List[str]):
             streams = [f"{sym.lower()}@kline_{s.interval}" for sym in syms]
             url = f"{s.ws_base}/stream?streams={'/'.join(streams)}"
@@ -77,7 +74,9 @@ class CryptoMonitor(CryptoDataDownloader):
                 assert set(s.syms) == set(s.data), "info update"
 
         await s.get_info_filtered()
-        await gather_n_cancel(*map(get_one, s.syms))
+        queries = [dict(symbol=sym) for sym in s.syms]
+        for sym, res in zip(s.syms, await s.get_kline_many(queries)):
+            s.data[sym] = res
         tasks = [watch_some(syms) for syms in chunk(s.syms, s.chunk_size)]
         tasks += [watch_info()]
         await gather_n_cancel(*tasks)

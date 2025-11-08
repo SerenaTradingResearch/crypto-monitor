@@ -1,10 +1,17 @@
 import asyncio
 import signal
 import sys
+import traceback
 from functools import wraps
 from typing import List
 
 from PIL import Image
+
+
+def show_err():
+    lines = traceback.format_exc().splitlines()
+    msg = "\n".join("    " + x for x in lines)
+    print(f"\033[91m{msg}\033[0m")
 
 
 def retry(sleep=60):
@@ -14,8 +21,8 @@ def retry(sleep=60):
             while True:
                 try:
                     return await func(*args, **kwargs)
-                except Exception as e:
-                    print(f"Retrying after {e}")
+                except Exception:
+                    show_err()
                     await asyncio.sleep(sleep)
 
         return func2
