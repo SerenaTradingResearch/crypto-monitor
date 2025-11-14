@@ -1,10 +1,12 @@
 import asyncio
+import math
 import signal
 import sys
 import traceback
 from functools import wraps
 from typing import List
 
+from crypto_data_downloader.utils import timestamp
 from PIL import Image
 
 
@@ -28,6 +30,32 @@ def retry(sleep=60):
         return func2
 
     return decorator
+
+
+def repeat(dt=60, sleep=1):
+    dt_ms = dt * 1e3
+
+    def decorator(func):
+        @wraps(func)
+        async def func2(*args, **kwargs):
+            next_ts = math.ceil(timestamp() / dt_ms + 1) * dt_ms
+            while True:
+                await asyncio.sleep(sleep)
+                if timestamp() >= next_ts:
+                    next_ts += dt_ms
+                    await func(*args, **kwargs)
+
+        return func2
+
+    return decorator
+
+
+async def gather_n_pass(*tasks):
+    tasks = [asyncio.create_task(x) for x in tasks]
+    try:
+        return await asyncio.gather(*tasks)
+    except Exception:
+        show_err()
 
 
 async def gather_n_cancel(*tasks):
