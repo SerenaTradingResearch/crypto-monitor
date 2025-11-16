@@ -10,6 +10,11 @@ from crypto_data_downloader.utils import timestamp
 from PIL import Image
 
 
+def my_round(x, dx):
+    dx = float(dx)
+    return round(round(float(x) / dx) * dx, 10)
+
+
 def show_err():
     lines = traceback.format_exc().splitlines()
     msg = "\n".join("    " + x for x in lines)

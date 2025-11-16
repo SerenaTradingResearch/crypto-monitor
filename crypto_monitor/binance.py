@@ -1,10 +1,11 @@
 import asyncio
+from collections import defaultdict
 from typing import Dict, List
 
 import numpy as np
 from crypto_data_downloader.binance import CryptoDataDownloader, FuturesDataDownloader
 
-from .utils import chunk, gather_n_cancel, retry
+from .utils import chunk, gather_n_cancel, my_round, retry
 
 MAP1 = {
     "t": "open_time",
@@ -38,7 +39,19 @@ class CryptoMonitor(CryptoDataDownloader):
             return allowed and x["status"] == "TRADING"
 
         await s.get_info()
-        s.symbols = [x for x in s.symbols if ok(x)][: s.max_num]
+        s.filters = {
+            x["symbol"]: {f["filterType"]: f for f in x["filters"]} for x in s.symbols
+        }
+        s.symbols = list(filter(ok, s.symbols))[: s.max_num]
+
+    def round(s, sym, qty=0, price=0):
+        f = s.filters[sym]
+        dq = f["LOT_SIZE"]["stepSize"]
+        dp = f["PRICE_FILTER"]["tickSize"]
+        return my_round(qty, dq), my_round(price, dp)
+
+    def min_cash(s, sym):
+        return float(s.filters[sym]["MIN_NOTIONAL"]["notional"])
 
     @property
     def syms(s) -> List[str]:
@@ -48,12 +61,12 @@ class CryptoMonitor(CryptoDataDownloader):
     async def watch(s):
         assert s.columns[0] == "open_time"
         s.data: Dict[str, np.ndarray] = {}
-        s.update_time: Dict[str, int] = {}
+        s.update_time: Dict[str, int] = defaultdict(int)
 
         async def watch_some(syms: List[str]):
             streams = [f"{sym.lower()}@kline_{s.interval}" for sym in syms]
             url = f"{s.ws_base}/stream?streams={'/'.join(streams)}"
-            async with s.ses.ws_connect(url) as ws:
+            async with s.ses.ws_connect(url, heartbeat=20) as ws:
                 async for msg in ws:
                     r = msg.json()
                     e_time = r["data"]["E"]
@@ -65,11 +78,11 @@ class CryptoMonitor(CryptoDataDownloader):
                         arr[:] = np.roll(arr, -1, axis=0)
                     for i, col in enumerate(s.columns):
                         arr[-1, i] = float(k[MAP2[col]])
-                    await s.on_change(sym, arr, e_time)
+                    # asyncio.create_task(s.on_change(sym, arr, e_time))
 
         async def watch_info():
             while True:
-                await asyncio.sleep(120)
+                await asyncio.sleep(30 * 60)
                 await s.get_info_filtered()
                 assert set(s.syms) == set(s.data), "info update"
 
