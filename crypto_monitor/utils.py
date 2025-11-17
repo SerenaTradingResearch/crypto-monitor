@@ -15,8 +15,11 @@ def my_round(x, dx):
     return round(round(float(x) / dx) * dx, 10)
 
 
-def show_err():
-    lines = traceback.format_exc().splitlines()
+def show_err(e: Exception = None):
+    if e is None:
+        lines = traceback.format_exc().splitlines()
+    else:
+        lines = traceback.format_exception(type(e), e, e.__traceback__)
     msg = "\n".join("    " + x for x in lines)
     print(f"\033[91m{msg}\033[0m")
 
@@ -57,10 +60,9 @@ def repeat(dt=60, sleep=1):
 
 async def gather_n_pass(*tasks):
     tasks = [asyncio.create_task(x) for x in tasks]
-    try:
-        return await asyncio.gather(*tasks)
-    except Exception:
-        show_err()
+    res = await asyncio.gather(*tasks, return_exceptions=True)
+    [show_err(r) for r in res if isinstance(r, Exception)]
+    return res
 
 
 async def gather_n_cancel(*tasks):
