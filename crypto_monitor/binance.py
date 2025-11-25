@@ -48,7 +48,7 @@ class CryptoMonitor(CryptoDataDownloader):
         f = s.filters[sym]
         dq = f["LOT_SIZE"]["stepSize"]
         dp = f["PRICE_FILTER"]["tickSize"]
-        return my_round(qty, dq), my_round(price, dp)
+        return my_round(qty, dq, "down"), my_round(price, dp)
 
     def min_cash(s, sym):
         return float(s.filters[sym]["MIN_NOTIONAL"]["notional"])

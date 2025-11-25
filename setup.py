@@ -5,7 +5,7 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="crypto-monitor",
-    version="0.1.8",
+    version="0.1.9",
     author="Ricky Ding",
     author_email="e0134117@u.nus.edu",
     description="Lightweight real-time cryptocurrency market monitor via WebSocket",

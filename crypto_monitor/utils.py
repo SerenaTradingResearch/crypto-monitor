@@ -10,9 +10,10 @@ from crypto_data_downloader.utils import timestamp
 from PIL import Image
 
 
-def my_round(x, dx):
+def my_round(x, dx, dir="none"):
+    fn = {"none": round, "up": math.ceil, "down": math.floor}[dir]
     dx = float(dx)
-    return round(round(float(x) / dx) * dx, 10)
+    return round(fn(float(x) / dx) * dx, 10)
 
 
 def show_err(e: Exception = None):
