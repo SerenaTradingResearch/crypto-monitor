@@ -62,6 +62,7 @@ class CryptoMonitor(CryptoDataDownloader):
         assert s.columns[0] == "open_time"
         s.data: Dict[str, np.ndarray] = {}
         s.update_time: Dict[str, int] = defaultdict(int)
+        s.price: Dict[str, float] = defaultdict(float)
 
         async def watch_some(syms: List[str]):
             streams = [f"{sym.lower()}@kline_{s.interval}" for sym in syms]
@@ -73,6 +74,7 @@ class CryptoMonitor(CryptoDataDownloader):
                     k = r["data"]["k"]
                     sym, t = k["s"], k["t"]
                     s.update_time[sym] = e_time
+                    s.price[sym] = float(k["c"])
                     arr = s.data[sym]
                     if t != arr[-1, 0]:
                         arr[:] = np.roll(arr, -1, axis=0)
