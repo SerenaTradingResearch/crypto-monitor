@@ -42,6 +42,7 @@ class CryptoMonitor(CryptoDataDownloader):
         s.filters = {
             x["symbol"]: {f["filterType"]: f for f in x["filters"]} for x in s.symbols
         }
+        s.liq_fee = {x["symbol"]: float(x.get("liquidationFee", 0)) for x in s.symbols}
         s.symbols = list(filter(ok, s.symbols))[: s.max_num]
 
     def round(s, sym, qty=0, price=0):
