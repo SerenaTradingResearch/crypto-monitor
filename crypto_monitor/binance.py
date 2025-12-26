@@ -45,11 +45,13 @@ class CryptoMonitor(CryptoDataDownloader):
         s.liq_fee = {x["symbol"]: float(x.get("liquidationFee", 0)) for x in s.symbols}
         s.symbols = list(filter(ok, s.symbols))[: s.max_num]
 
-    def round(s, sym, qty=0, price=0):
-        f = s.filters[sym]
-        dq = f["LOT_SIZE"]["stepSize"]
-        dp = f["PRICE_FILTER"]["tickSize"]
-        return my_round(qty, dq, "down"), my_round(price, dp)
+    def round_qty(s, sym, qty, dir):
+        dq = s.filters[sym]["LOT_SIZE"]["stepSize"]
+        return my_round(qty, dq, dir)
+
+    def round_price(s, sym, price, dir):
+        dp = s.filters[sym]["PRICE_FILTER"]["tickSize"]
+        return my_round(price, dp, dir)
 
     def min_cash(s, sym):
         return float(s.filters[sym]["MIN_NOTIONAL"]["notional"])
