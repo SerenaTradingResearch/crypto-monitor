@@ -89,11 +89,11 @@ class CryptoMonitor(CryptoDataDownloader):
             while True:
                 await asyncio.sleep(30 * 60)
                 await s.get_info_filtered()
-                assert set(s.syms) == set(s.data), "info update"
+                for sym in set(s.syms) - set(s.data):
+                    s.data[sym] = await s.get_kline(sym)
 
         await s.get_info_filtered()
-        queries = [dict(symbol=sym) for sym in s.syms]
-        for sym, res in zip(s.syms, await s.get_kline_many(queries)):
+        for sym, res in zip(s.syms, await s.get_kline_many(s.syms)):
             s.data[sym] = res
         tasks = [watch_some(syms) for syms in chunk(s.syms, s.chunk_size)]
         tasks += [watch_info()]
